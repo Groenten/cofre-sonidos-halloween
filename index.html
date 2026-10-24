@@ -1068,7 +1068,19 @@
             if (p && p.catch) p.catch(rej)
           })
         }
+        async function loadOriginalBuffer(src) {
+          if (src.startsWith('data:')) {
+            return decode(dataToBuffer(src))
+          }
 
+          const response = await fetch(src)
+
+          if (!response.ok) {
+            throw new Error(`No se pudo cargar ${src}`)
+          }
+
+          return decode(await response.arrayBuffer())
+        }
         // Almacenamiento permanente de audios propios en este navegador/dispositivo.
         const DB_NAME = 'cofre-sonidos-halloween'
         const DB_STORE = 'audios'
@@ -1166,7 +1178,7 @@
                     /* Si el audio guardado no se puede leer, recuperar el original. */
                   }
                 }
-                buffers[id] = await decode(dataToBuffer(INFO[id].src))
+                buffers[id] = await loadOriginalBuffer(INFO[id].src)
               })
             )
           }
@@ -1559,7 +1571,7 @@
             } catch (_) {
               /* El original también puede restaurarse si IndexedDB no está disponible. */
             }
-            buffers[id] = await decode(dataToBuffer(INFO[id].src))
+            buffers[id] = await loadOriginalBuffer(INFO[id].src)
             $('.custom-note', cards[id]).hidden = true
             $('[data-restore]', cards[id]).hidden = true
             say(`Sonido original restaurado para ${INFO[id].label}.`)
